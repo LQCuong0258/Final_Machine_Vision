@@ -4,53 +4,37 @@ import numpy as np
 from pickletools import uint8
 from Grayscale import grayscale_luminance
 
+'''
+Hàm này xác định biên dạng của hình ảnh bằng phương pháp Sobel
+'''
+def Sobel(img_PIL, limit):
+    gray = grayscale_luminance(img_PIL) # chuyển ảnh mức xám
+    img_array = np.array(gray)
 
-import numpy as np
-from PIL import Image
+    # Vì 3 kênh xám đều giống nhau, nên chỉ lấy 1 kênh
+    R = img_array[:, :, 0]      # get channel red
+    X = np.array([[-1, -2, -1],
+                  [ 0,  0,  0],
+                  [ 1,  2,  1]])
+    Y = np.array([[-1,  0,  1],
+                  [-2,  0,  2],
+                  [-1,  0,  1]])
 
-def Sobel(img_gray, k):
-    Sobelx = np.array([[-1, -2, -1],
-                       [ 0,  0,  0],
-                       [ 1,  2,  1]])
+    Gxr    = np.zeros((img_array.shape[0], img_array.shape[1]))   # (cao, rộng)
+    Gyr    = np.zeros((img_array.shape[0], img_array.shape[1]))   # (cao, rộng)
 
-    Sobely = np.array([[-1,  0,  1],
-                       [-2,  0,  2],
-                       [-1,  0,  1]])
+    # padding để output có kích thước bằng input
+    padded = np.pad(R, pad_width = 1, mode = 'constant', constant_values = 0)
 
-    # Convert PIL image to NumPy array
-    img_array = np.array(img_gray)
+    height, width = padded.shape # [cao, rộng]
+    for i in range (1, height - 1):
+        for j in range (1, width - 1):
+            Gxr[i-1, j-1] = np.sum(padded[i-1:i+2, j-1:j+2] * X)
+            Gyr[i-1, j-1] = np.sum(padded[i-1:i+2, j-1:j+2] * Y)
+    M = np.abs(Gxr) + np.abs(Gyr)       # sắp xỉ căn bậc 2 của tổng 2 bình phương
+    Sobel = np.where(M < limit, 0, 255).astype(np.uint8)    # trả về 1 layer của ảnh Sobel
 
-    # Apply Sobel filters to the image using manual convolution
-    Grx = manual_convolution(img_array, Sobelx)
-    Gry = manual_convolution(img_array, Sobely)
-
-    # Compute magnitude of gradient
-    M = np.abs(Grx) + np.abs(Gry)
-
-    # Thresholding
-    Sobel = np.where(M < k, 0, 255).astype(np.uint8)
-
-    return Image.fromarray(Sobel)
-
-def manual_convolution(image, kernel):
-    # Get image dimensions and kernel dimensions
-    image_width, image_height = image.size
-    kernel_height, kernel_width = kernel.shape
-
-    # Calculate padding needed for 'same' convolution
-    pad_height = kernel_height // 2
-    pad_width = kernel_width // 2
-
-    # Add zero padding to the image
-    padded_image = np.pad(image, ((pad_height, pad_height), (pad_width, pad_width)), mode='edge')
-
-    # Convolve the image with the kernel
-    convolved_image = np.zeros_like(image)
-    for i in range(image_height):
-        for j in range(image_width):
-            convolved_image[i, j] = np.sum(padded_image[i:i+kernel_height, j:j+kernel_width] * kernel)
-
-    return convolved_image
+    return np.dstack((Sobel, Sobel, Sobel))                 # Trả về 1 ảnh có 3 layer giống nhau
 
 def Prewitt(img_gray, k):
     Prewitt=Image.new(img_gray.mode, img_gray.size)
@@ -109,12 +93,12 @@ def Robert(img_gray,k):
 
 def main():
     path = r'Lena_color.jpg'
-    imgPIL = Image.open(path)
-    gray = grayscale_luminance(imgPIL)
 
     image = cv2.imread(path, cv2.IMREAD_COLOR)
     cv2.imshow('Anh mau RGB', image)
-    cv2.imshow('Anh duoc nhan dang duong bien Sobel', Sobel(gray, 130))
+    
+    imgPIL = Image.open(path)
+    cv2.imshow('Anh duoc nhan dang duong bien Sobel', Sobel(imgPIL, 130))
 
     
     cv2.waitKey(0)          # Bấm phím bất kì để đóng cửa sổ hiển thị hình
