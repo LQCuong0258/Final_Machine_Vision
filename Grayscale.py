@@ -48,26 +48,14 @@ def grayscale_lightness(imgPIL):
             lightness.putpixel((x, y), (gray, gray, gray))
     return lightness
 def grayscale_luminance(imgPIL):
-    # Init image as size and more of imgPIL
-    # its to use store Grayscale of image RGB
-    luminance = Image.new(imgPIL.mode, imgPIL.size)
+    img_array = np.array(imgPIL)
+    R = img_array[:, :, 0]
+    G = img_array[:, :, 1]
+    B = img_array[:, :, 2]
 
-    # Get size of imgPIL
-    width, height = luminance.size
+    gray = (R*0.2116 + G*0.7152 + B*0.0722).astype(np.uint8)
 
-    # Scan image bằng 2 vòng for and scan từ trái sang phải cho từng dòng
-    for x in range(width):
-        for y in range(height):
-            # Get pixel and 3 thông số về R, G, B của ảnh màu
-            R, G, B = imgPIL.getpixel((x, y))
-
-            # Tính toán mức xám theo công thức Luminance
-            gray = np.uint8(0.2126*R + 0.7152*G + 0.0722*B)
-
-            # Gán giá trị mức xám vừa tính được
-            # cho biến hiển thị mức xám
-            luminance.putpixel((x, y), (gray, gray, gray))
-    return luminance
+    return np.dstack((gray, gray, gray))
 
 
 def main():
@@ -80,19 +68,13 @@ def main():
 
     # Use library PILLOW to read image used caculator
     imgPIL = Image.open(file_image)
-    # Change from image PIL to OpenCV, to show by OpenCV
-    average = np.array(grayscale_average(imgPIL))
-    lightness = np.array(grayscale_lightness(imgPIL))
-    luminance = np.array(grayscale_luminance(imgPIL))
+    luminance = grayscale_luminance(imgPIL)
     # Hiển thị ảnh gốc bằng thư viện cv2
     cv2.imshow('Anh mau goc RGB co gai Lena', image)
     # Hiển thị ảnh mức xám
-    cv2.imshow('Anh muc xam phuong phap Average co gai Lena_Average', average)
-    cv2.imshow('Anh muc xam phuong phap Lightness co gai Lena_Average', lightness)
     cv2.imshow('Anh muc xam phuong phap Luminance co gai Lena_Average', luminance)
-    # Phím bất kì để đóng cửa sổ làm việc
+
     cv2.waitKey(0)
-    # Giải phóng bộ nhớ đã được cấp phát
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
