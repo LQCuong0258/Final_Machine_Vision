@@ -3,8 +3,7 @@ from PIL import Image
 import numpy as np
 from Grayscale import grayscale_luminance
 
-def Binary(img_PIL, limit):
-    gray = grayscale_luminance(img_PIL)
+def Binary(gray, limit):
     img_array = np.array(gray)
     red = img_array[:,:, 0]
     binary = np.where(red < limit, 0, 255).astype(np.uint8)
